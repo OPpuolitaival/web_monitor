@@ -1,9 +1,14 @@
-import requests
-import pytest
-import time
-import logging
-import json
+# pylint: disable=redefined-outer-name
+"""
+Tests for web site monitoring
+"""
 
+import json
+import logging
+import time
+
+import pytest
+import requests
 from kafka import KafkaProducer
 
 logger = logging.getLogger(__name__)
@@ -11,13 +16,14 @@ logger = logging.getLogger(__name__)
 
 @pytest.fixture(scope='session')
 def test_config(request):
-    with open(request.config.getoption('config')) as f:
-        return json.load(f)
+    """ Fixture to read test configuration given by --config parameter in commandline"""
+    with open(request.config.getoption('config')) as config_file:
+        return json.load(config_file)
 
 
 @pytest.fixture(scope='session')
-def kafka_json_sender(test_config):
-    # TODO: Read address from configuration
+def kafka_producer(test_config):
+    """ Kafka producer as fixture for easy sending data to kafka from test cases """
     producer = KafkaProducer(
         bootstrap_servers='localhost:9092',
         value_serializer=lambda v: json.dumps(v).encode('utf-8')
@@ -25,7 +31,7 @@ def kafka_json_sender(test_config):
     topic = 'my_channel'
 
     def send(json_message):
-        logger.debug("Sending kafka: topic: {}, message: {}".format(topic, json_message))
+        logger.debug("Sending kafka: topic: %s message: %s", topic, json_message)
         producer.send(topic, json_message)
 
     yield send
@@ -33,23 +39,32 @@ def kafka_json_sender(test_config):
 
 
 @pytest.mark.web_page_monitring
-def test_web_site(site, test_config):
+def test_get_url(site):
+    """ Executes HTTP get method for given site
+        Example of site dict:
+        {
+            "name": "google",
+            "url": "https://google.com",
+            "expected_status_code": 200,
+            "assert_text": "google"
+        }
+    """
     # Do request and measure time
     start_time = time.time()
-    r = requests.get(site['url'])
+    response = requests.get(site['url'])
     duration = time.time() - start_time
 
     # Collect data for kafka
     data = {
         'expected_status_code': site.get('expected_status_code'),
-        'status_code': r.status_code,
+        'status_code': response.status_code,
         'duration_ms': duration * 1000,
-        'expected_return_code': site.get('expected_status_code') == r.status_code,
-        'content_length': len(r.text)  # Sometimes this helps to see that things changes
+        'expected_return_code': site.get('expected_status_code') == response.status_code,
+        'content_length': len(response.text)  # Sometimes this helps to see that things changes
     }
-    logger.debug('data: {}'.format(data))
+    logger.debug('data: %s', data)
     # kafka_json_sender.send(data)
 
-    assert site.get('expected_status_code') == r.status_code
+    assert site.get('expected_status_code') == response.status_code
     if 'assert_text' in list(site):
-        assert site['assert_text'] in r.text
+        assert site['assert_text'] in response.text

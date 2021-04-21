@@ -7,3 +7,11 @@ Run tests in commandline:
 ```
 pytest --config config_example.json
 ```
+
+
+# Developing tests
+
+Check code formattin by running
+```
+pylint tests/
+```
