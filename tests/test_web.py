@@ -3,22 +3,20 @@ import pytest
 import time
 import logging
 import json
-import os
 
 from kafka import KafkaProducer
 
 logger = logging.getLogger(__name__)
 
-# Read sites configuration from file
-sites = list()
-if not os.path.isfile('sites.json'):
-    raise Exception('sites.json is expected to locate in current working directory!')
-with open('sites.json') as f:
-    sites = json.load(f)
+
+@pytest.fixture(scope='session')
+def test_config(request):
+    with open(request.config.getoption('config')) as f:
+        return json.load(f)
 
 
 @pytest.fixture(scope='session')
-def kafka_json_sender():
+def kafka_json_sender(test_config):
     # TODO: Read address from configuration
     producer = KafkaProducer(
         bootstrap_servers='localhost:9092',
@@ -34,8 +32,8 @@ def kafka_json_sender():
     producer.close()
 
 
-@pytest.mark.parametrize('site', sites, ids=[x['name'] for x in sites])
-def test_web_site(site, kafka_json_sender):
+@pytest.mark.web_page_monitring
+def test_web_site(site, test_config):
     # Do request and measure time
     start_time = time.time()
     r = requests.get(site['url'])
@@ -46,9 +44,11 @@ def test_web_site(site, kafka_json_sender):
         'expected_status_code': site.get('expected_status_code'),
         'status_code': r.status_code,
         'duration_ms': duration * 1000,
+        'expected_return_code': site.get('expected_status_code') == r.status_code,
+        'content_length': len(r.text)  # Sometimes this helps to see that things changes
     }
     logger.debug('data: {}'.format(data))
-    kafka_json_sender.send(data)
+    # kafka_json_sender.send(data)
 
     assert site.get('expected_status_code') == r.status_code
     if 'assert_text' in list(site):
