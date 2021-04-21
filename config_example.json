@@ -1,0 +1,9 @@
+{
+  "sites": [
+    {
+      "name": "Google.com",
+      "url": "https://google.com",
+      "expected_status_code": 200
+    }
+  ]
+}

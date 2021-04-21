@@ -1,10 +1,9 @@
 
 # Web site monitoring project
 
-TODO:
-* Send Kafta
-* Read Kafka
-* Send to Possu
-* Jenkinsfiles
-* Dockerization
-* pylinter
+This project enable web site monitoring
+
+Run tests in commandline:
+```
+pytest --config config_example.json
+```
