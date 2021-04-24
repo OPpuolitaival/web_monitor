@@ -8,5 +8,10 @@
 node('master'){
 
     checkout scm
-    sh 'ls -la'
+    sh 'python3 -m temp_venv'
+
+    sh """#/bin/bash
+        source temp_venv/bin/activate
+        pip install -r requirements.txt
+    """
 }
