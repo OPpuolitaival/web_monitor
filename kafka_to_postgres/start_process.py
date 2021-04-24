@@ -1,3 +1,6 @@
+"""
+Process that reads messages from Kafka and send those to the postgresql
+"""
 import json
 import logging
 import sys
@@ -13,15 +16,22 @@ log.addHandler(logging.StreamHandler())
 
 class PostgreSqlConnector:
 
-    def __init__(self, monitor_name='web_monitor'):
-        self.measurements_table_name = monitor_name
-        self.urls_table_name = '{}_urls'.format(monitor_name)
-        # user='postgres' password='secret'
-        self.conn = psycopg2.connect("host='localhost' port='5432' dbname='mydb'")
+    def __init__(self, database_name, table_name, host, port, user, password):
+        """
+
+        :param database_name:
+        :param table_name:
+        :param host:
+        :param port:
+        :param user:
+        :param password:
+        """
+        self.table_name = table_name
+        self.conn = psycopg2.connect(host=host, port=port, dbname=database_name, user=user, password=password)
 
         cur = self.conn.cursor()
         cur.execute("""
-        CREATE TABLE IF NOT EXISTS {measurements_table_name} (
+        CREATE TABLE IF NOT EXISTS {table_name} (
               id                      SERIAL NOT NULL PRIMARY KEY,
               created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
               url                     varchar(255) NOT NULL,
@@ -32,11 +42,8 @@ class PostgreSqlConnector:
               start_time              float(20),
               content_check           boolean
         );
-        CREATE INDEX IF NOT EXISTS measurement_ur ON {measurements_table_name} (url, return_code);        
-        """.format(
-            measurements_table_name=self.measurements_table_name,
-            urls_table_name=self.urls_table_name
-        ))
+        CREATE INDEX IF NOT EXISTS measurement_ur ON {table_name} (url, return_code);        
+        """.format(table_name=self.table_name))
         # Make sure that table exists
         self.conn.commit()
 
@@ -44,12 +51,11 @@ class PostgreSqlConnector:
                       content_check):
         cur = self.conn.cursor()
         cur.execute("""            
-            INSERT INTO {measurements_table_name} (url, return_code, expected_return_code, duration, content_length, 
+            INSERT INTO {table_name} (url, return_code, expected_return_code, duration, content_length, 
             start_time, content_check)
                     VALUES ('{url}', {return_code}, {expected_return_code}, {duration}, {content_length}, {start_time}, 
                     {content_check});""".format(
-            urls_table_name=self.urls_table_name,
-            measurements_table_name=self.measurements_table_name,
+            table_name=self.table_name,
             url=url,
             return_code=return_code,
             expected_return_code=expected_return_code,
@@ -75,10 +81,13 @@ def start_process(config, verbose):
 
     log.debug('Checking configuration..')
     assert 'kafka' in list(configuration)
-    assert 'postgres' in list(configuration)
     assert 'channel' in list(configuration['kafka'])
     assert 'bootstrap_servers' in list(configuration['kafka'])
-    assert 'table_name' in list(configuration['postgres'])
+
+    assert 'postgres' in list(configuration)
+    postgres_config = configuration['postgres']
+    for field in ['database_name', 'table_name', 'host', 'port']:
+        assert field in list(postgres_config)
     log.debug('Configuration OK')
 
     log.info("Starting process..")
@@ -86,13 +95,21 @@ def start_process(config, verbose):
         log.debug("Loop..")
         sleep(0.1)  # Avoid busy loop
         try:
-            consumer = KafkaConsumer(
+            kafka_consumer = KafkaConsumer(
                 configuration['kafka']['channel'],
                 bootstrap_servers=configuration['kafka']['bootstrap_servers'],
                 value_deserializer=lambda message: json.loads(message))
-            postgres_connector = PostgreSqlConnector(configuration['postgres']['table_name'])
+            postgres_connector = PostgreSqlConnector(
+                database_name=postgres_config['database_name'],
+                table_name=postgres_config['table_name'],
+                host=postgres_config['host'],
+                port=postgres_config['port'],
+                user=postgres_config.get('user', None),
+                password=postgres_config.get('password', None)
+            )
 
-            for msg in consumer:
+            log.debug("Waiting for messages..")
+            for msg in kafka_consumer:
                 log.debug('<= {}'.format(msg.value))
                 postgres_connector.insert_record(
                     url=msg.value['url'],
@@ -103,14 +120,14 @@ def start_process(config, verbose):
                     start_time=msg.value['start_time'],
                     content_check=msg.value['content_check']
                 )
+                log.debug('Message send to postgres')
 
         except KeyboardInterrupt:
             log.info("Stopping process..")
-            sys.exit(1)
+            sys.exit(0)
         except BaseException as exception:
-            log.debug(exception, exc_info=True)
+            log.error(exception, exc_info=True)
 
 
 if __name__ == '__main__':
-    log.info("Starts")
     start_process()
