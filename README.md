@@ -5,6 +5,7 @@ This project enable web site monitoring
 
 Run tests in commandline:
 ```
+cd pytest
 pytest --config config_example.json
 ```
 
@@ -13,5 +14,6 @@ pytest --config config_example.json
 
 Check code formattin by running
 ```
-pylint tests/
+cd pytest
+pylint --ignore-patterns=.*.json,.*.ini *
 ```
