@@ -1,4 +1,4 @@
-# pylint: disable=redefined-outer-name,wrong-import-order
+# pylint: disable=redefined-outer-name
 """
 Pytest fixtures
 """

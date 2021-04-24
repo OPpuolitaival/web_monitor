@@ -10,6 +10,7 @@ import requests
 
 logger = logging.getLogger(__name__)
 
+
 @pytest.mark.web_page_monitoring
 def test_get_url(site, send_to_kafka):
     """ Executes HTTP get method for given site
