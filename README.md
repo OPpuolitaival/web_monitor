@@ -14,6 +14,5 @@ pytest --config config_example.json
 
 Check code formattin by running
 ```
-cd pytest
-pylint --ignore-patterns=.*.json,.*.ini *
+pylint *
 ```
