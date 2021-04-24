@@ -3,3 +3,4 @@ pytest
 requests
 pylint
 psycopg2-binary
+click

@@ -3,16 +3,16 @@
 
 This project enable web site monitoring
 
-Run tests in commandline:
+Run tests with example configuration:
 ```
-cd pytest
-pytest --config config_example.json
+cd pytests 
+pytest --config ../config_example.json .
 ```
 
 
 # Developing tests
 
-Check code formattin by running
+Check code formatting by running
 ```
 pylint *
 ```
