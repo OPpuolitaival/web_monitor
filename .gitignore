@@ -1,4 +1,4 @@
 .idea
 pytest.log
-config.json
+config*.json
 __pycache__
