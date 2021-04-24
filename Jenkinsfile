@@ -20,6 +20,6 @@ node('master'){
         run_with_virtualenv('pip install -r requirements.txt')
     }
     stage('Pylint'){
-        run_with_virtualenv('pylint *')
+        run_with_virtualenv('pylint --ignore-patterns=temp_venv *')
     }
 }
