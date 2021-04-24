@@ -25,7 +25,11 @@ def send_to_kafka(test_config):
     if 'kafka' in test_config:
         producer = KafkaProducer(
             bootstrap_servers=test_config['kafka']['bootstrap_servers'],
-            value_serializer=lambda message: json.dumps(message).encode('utf-8')
+            security_protocol=test_config['kafka'].get('security_protocol', 'PLAINTEXT'),
+            ssl_cafile=test_config['kafka'].get('ca_path', None),
+            ssl_certfile=test_config['kafka'].get('cert_path', None),
+            ssl_keyfile=test_config['kafka'].get('key_path', None),
+            value_serializer=lambda message: json.dumps(message).encode('utf-8'),
         )
         # Use web_tests as default channel if not configured
         topic = test_config['kafka'].get('channel', 'web_tests')

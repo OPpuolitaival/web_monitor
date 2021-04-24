@@ -3,6 +3,7 @@ Process that reads messages from Kafka and send those to the postgresql
 """
 import json
 import logging
+import os.path
 import sys
 from time import sleep
 
@@ -16,18 +17,11 @@ log.addHandler(logging.StreamHandler())
 
 class PostgreSqlConnector:
 
-    def __init__(self, database_name, table_name, host, port, user, password):
+    def __init__(self, database_name, table_name, uri):
         """
-
-        :param database_name:
-        :param table_name:
-        :param host:
-        :param port:
-        :param user:
-        :param password:
         """
         self.table_name = table_name
-        self.conn = psycopg2.connect(host=host, port=port, dbname=database_name, user=user, password=password)
+        self.conn = psycopg2.connect(uri)
 
         cur = self.conn.cursor()
         cur.execute("""
@@ -68,13 +62,16 @@ class PostgreSqlConnector:
 
 
 @click.command()
-@click.option('--config', help='Configuration file')
+@click.option('--config', help='Configuration file', required=True)
 @click.option('--verbose', default=False, is_flag=True, help='More verbose logging')
 def start_process(config, verbose):
     if verbose:
         log.setLevel(logging.DEBUG)
     else:
         log.setLevel(logging.INFO)
+
+    if not os.path.isfile(config):
+        raise Exception('{} does not exits!'.format(config))
 
     with open(config) as config_file:
         configuration = json.load(config_file)
@@ -86,7 +83,7 @@ def start_process(config, verbose):
 
     assert 'postgres' in list(configuration)
     postgres_config = configuration['postgres']
-    for field in ['database_name', 'table_name', 'host', 'port']:
+    for field in ['database_name', 'table_name', 'uri']:
         assert field in list(postgres_config)
     log.debug('Configuration OK')
 
@@ -98,19 +95,20 @@ def start_process(config, verbose):
             kafka_consumer = KafkaConsumer(
                 configuration['kafka']['channel'],
                 bootstrap_servers=configuration['kafka']['bootstrap_servers'],
+                security_protocol=configuration['kafka'].get('security_protocol', 'PLAINTEXT'),
+                ssl_cafile=configuration['kafka'].get('ca_path', None),
+                ssl_certfile=configuration['kafka'].get('cert_path', None),
+                ssl_keyfile=configuration['kafka'].get('key_path', None),
                 value_deserializer=lambda message: json.loads(message))
             postgres_connector = PostgreSqlConnector(
                 database_name=postgres_config['database_name'],
                 table_name=postgres_config['table_name'],
-                host=postgres_config['host'],
-                port=postgres_config['port'],
-                user=postgres_config.get('user', None),
-                password=postgres_config.get('password', None)
+                uri=postgres_config['uri'],
             )
 
             log.debug("Waiting for messages..")
             for msg in kafka_consumer:
-                log.debug('<= {}'.format(msg.value))
+                log.info('<= {}'.format(msg.value))
                 postgres_connector.insert_record(
                     url=msg.value['url'],
                     return_code=msg.value['return_code'],
