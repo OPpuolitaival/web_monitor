@@ -17,7 +17,7 @@ log.addHandler(logging.StreamHandler())
 
 class PostgreSqlConnector:
 
-    def __init__(self, database_name, table_name, uri):
+    def __init__(self, table_name, uri):
         """
         """
         self.table_name = table_name
@@ -101,7 +101,6 @@ def start_process(config, verbose):
                 ssl_keyfile=configuration['kafka'].get('key_path', None),
                 value_deserializer=lambda message: json.loads(message))
             postgres_connector = PostgreSqlConnector(
-                database_name=postgres_config['database_name'],
                 table_name=postgres_config['table_name'],
                 uri=postgres_config['uri'],
             )
