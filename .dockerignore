@@ -1,0 +1,7 @@
+
+*.json
+Jenkinsfile
+.gitignore
+.git
+.idea
+.pytest_cache
