@@ -1,3 +1,4 @@
+# pylint: disable=no-value-for-parameter,broad-except,unnecessary-lambda
 """
 Process that reads messages from Kafka and send those to the postgresql
 """
@@ -16,9 +17,12 @@ log.addHandler(logging.StreamHandler())
 
 
 class PostgreSqlConnector:
+    """ Helps Postgres connection handling """
 
     def __init__(self, table_name, uri):
         """
+        :param table_name: Table name which will be create if not exists yet
+        :param uri: database uri containing secrets and database name
         """
         self.table_name = table_name
         self.conn = psycopg2.connect(uri)
@@ -43,8 +47,9 @@ class PostgreSqlConnector:
 
     def insert_record(self, url, return_code, expected_return_code, duration, content_length, start_time,
                       content_check):
+        """ Add new record to the database """
         cur = self.conn.cursor()
-        cur.execute("""            
+        cur.execute("""
             INSERT INTO {table_name} (url, return_code, expected_return_code, duration, content_length, 
             start_time, content_check)
                     VALUES ('{url}', {return_code}, {expected_return_code}, {duration}, {content_length}, {start_time}, 
@@ -65,6 +70,8 @@ class PostgreSqlConnector:
 @click.option('--config', help='Configuration file', required=True)
 @click.option('--verbose', default=False, is_flag=True, help='More verbose logging')
 def start_process(config, verbose):
+    """ Process staring method """
+
     if verbose:
         log.setLevel(logging.DEBUG)
     else:
