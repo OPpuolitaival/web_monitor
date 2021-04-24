@@ -5,13 +5,21 @@
 * Documentation: https://www.jenkins.io/doc/book/pipeline/multibranch/
 */
 
+def run_with_virtualenv(command){
+    sh """#/bin/bash
+        source temp_venv/bin/activate
+        ${command}
+    """
+}
+
 node('master'){
 
     checkout scm
-    sh 'python3 -m temp_venv'
-
-    sh """#/bin/bash
-        source temp_venv/bin/activate
-        pip install -r requirements.txt
-    """
+    stage('Setup'){
+        sh 'python3 -m venv temp_venv'
+        run_with_virtualenv('pip install -r requirements.txt')
+    }
+    stage('Pylint'){
+        run_with_virtualenv('pylint *')
+    }
 }
