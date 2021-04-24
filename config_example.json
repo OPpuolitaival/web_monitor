@@ -1,5 +1,12 @@
-
 {
+  "kafka": {
+    "bootstrap_servers": "localhost:9092",
+    "channel": "web_tests"
+  },
+  "postgres": {
+    "table_name": "web_test_measurements",
+    "uri": "postgres://localhost:5432/mydb"
+  },
   "sites": [
     {
       "name": "Google.com",
