@@ -1,0 +1,28 @@
+{
+  "kafka": {
+    "bootstrap_servers": "<kafka-url>:<kafka-port>",
+    "channel": "web_monitor",
+    "security_protocol": "SSL",
+    "ca_path": "/path/to/ca.pem",
+    "cert_path": "/path/to/service.cert",
+    "key_path": "/path/to/service.key"
+  },
+  "postgres": {
+    "table_name": "web_monitor_measurements",
+    "uri": "postgres://avnadmin:<secret>.aivencloud.com:<port>/<database-name>?sslmode=require"
+  },
+  "sites": [
+    {
+      "name": "Google",
+      "url": "https://google.com",
+      "expected_return_code": 200,
+      "assert_regex": "google"
+    },
+    {
+      "name": "Amazon",
+      "url": "https://www.amazon.com/",
+      "expected_return_code": 200,
+      "assert_regex": "amazon"
+    }
+  ]
+}

@@ -90,7 +90,7 @@ def start_process(config, verbose):
 
     assert 'postgres' in list(configuration)
     postgres_config = configuration['postgres']
-    for field in ['database_name', 'table_name', 'uri']:
+    for field in ['table_name', 'uri']:
         assert field in list(postgres_config)
     log.debug('Configuration OK')
 

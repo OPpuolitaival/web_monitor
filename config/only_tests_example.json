@@ -1,0 +1,16 @@
+{
+  "sites": [
+    {
+      "name": "Google",
+      "url": "https://google.com",
+      "expected_return_code": 200,
+      "assert_regex": "google"
+    },
+    {
+      "name": "Amazon",
+      "url": "https://www.amazon.com/",
+      "expected_return_code": 200,
+      "assert_regex": "amazon"
+    }
+  ]
+}

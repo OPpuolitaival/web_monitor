@@ -1,0 +1,24 @@
+{
+  "kafka": {
+    "bootstrap_servers": "localhost:9092",
+    "channel": "web_tests"
+  },
+  "postgres": {
+    "table_name": "web_test_measurements",
+    "uri": "postgres://localhost:5432/web_tests_db"
+  },
+  "sites": [
+    {
+      "name": "Google",
+      "url": "https://google.com",
+      "expected_return_code": 200,
+      "assert_regex": "google"
+    },
+    {
+      "name": "Amazon",
+      "url": "https://www.amazon.com/",
+      "expected_return_code": 200,
+      "assert_regex": "amazon"
+    }
+  ]
+}
