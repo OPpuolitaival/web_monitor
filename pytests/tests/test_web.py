@@ -38,23 +38,35 @@ def test_get_url(site, send_to_kafka):
     """
     # Do request and measure time
     start_time = time.time()
-    response = requests.get(site['url'])
+    response = None
+    try:
+        response = requests.get(site['url'], timeout=10)
+    except BaseException as exception:
+        logging.debug(exception, exc_info=True)
+        logging.error("Error happened! {}".format(exception))
     duration = time.time() - start_time
 
     # Collect data for kafka
     data = {
         'url': site['url'],
-        'return_code': response.status_code,
         'expected_return_code': site.get('expected_return_code'),
-        'duration': duration * 1000,
-        'content_length': len(response.text),  # Sometimes this helps to see that things changes
         'start_time': start_time,
-        'content_check': regex_search(site.get('assert_regex', None), response.text)
+        'duration': duration * 1000,  # Using milliseconds as unit
     }
+    if response is None:
+        data['return_code'] = 0
+        data['content_length'] = 0
+        data['content_check'] = 0
+    else:
+        data['return_code'] = response.status_code
+        data['content_length'] = len(response.text)
+        data['content_check'] = regex_search(site.get('assert_regex', None), response.text)
+
     logger.debug('data: %s', data)
     send_to_kafka(data)
 
-    assert data['expected_return_code'], \
+    assert response is not None, 'Error happened in connection. Check logs for more information!'
+    assert data['expected_return_code'] == data['return_code'], \
         'Fail: {} return code expected but it was {}'.format(site.get('expected_return_code'), response.status_code)
     assert data['content_check'], \
         'Fail: Cannot find anything with regular expression search "{}"'.format(site['assert_regex'])
