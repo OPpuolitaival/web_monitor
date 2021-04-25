@@ -37,7 +37,7 @@ See configuration example files:
 
 Configuration file documentation:
 (This is not valid json. For copying purposes use some of example files)
-```json
+```
 {
   "kafka": {
     "bootstrap_servers": "localhost:9092",  // <kafka bootstrap server url and port>
