@@ -69,13 +69,13 @@ Configuration file documentation:
 
 Run Kafka to PostgreSQL process:
 ```bash
-python3 kafka_to_postgres/start_process.py --config config_example.json .
+python3 kafka_to_postgres/start_process.py --config path/to/config.json .
 ```
 
 Run tests with example configuration:
 ```bash
 cd pytests 
-pytest --config ../config_example.json .
+pytest --config path/to/config.json .
 ```
 
 ## Setup & running with docker
@@ -90,12 +90,12 @@ docker build -t web_monitor:latest .
 
 Run example test configuration:
 ```bash
-docker run --rm -ti -v `pwd`:/config -w /web_monitor/pytests/ web_monitor bash -c "pytest --config /config/config_example.json ."
+docker run --rm -ti -v `pwd`/config:/config -w /web_monitor/pytests/ web_monitor bash -c "pytest --config /config/remote_config_example.json ."
 ```
 
 Start process which delives kafka messages to postgres 
 ```bash
-docker run --rm -ti -v `pwd`:/config web_monitor bash -c "python3 kafka_to_postgres/start_process.py --config /config/config_remote.json"
+docker run --rm -ti -v `pwd`/config:/config web_monitor bash -c "python3 kafka_to_postgres/start_process.py --config /config/remote_config_example.json"
 ```
 
 ## Developing tests
